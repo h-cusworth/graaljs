@@ -39,6 +39,7 @@ from mx_graal_js import get_jdk
 _suite = mx.suite('graal-nodejs')
 _current_os = mx.get_os()
 _is_windows = _current_os == 'windows'
+_is_freebsd = _current_os == 'freebsd'
 _current_arch = mx.get_arch()
 _config_files = [join(_suite.dir, f) for f in ('configure', 'configure.py')]
 _generated_config_files = [join(_suite.dir, f) for f in ('config.gypi', 'config.status', 'configure.pyc', 'config.mk', 'icu_config.gypi')]
@@ -147,6 +148,12 @@ class GraalNodeJsBuildTask(mx.NativeBuildTask):
             extra_flags = ['--with-arm-fpu=vfp']
         else:
             extra_flags = []
+
+        if _is_freebsd:
+            build_env['LDFLAGS'] = ' '.join(['-fuse-ld=lld', '--target=aarch64-unknown-freebsd', '-Xclang', '-march=morello', '-mabi=aapcs', '-L/home/hannah/jdk17u/lib', '-lexecinfo'])
+            build_env['CFLAGS'] = ' '.join(['-fuse-ld=lld', '--target=aarch64-unknown-freebsd', '-mabi=aapcs'])
+            build_env['CXXFLAGS'] = ' '.join(['-fuse-ld=lld', '--target=aarch64-unknown-freebsd', '-mabi=aapcs'])
+            extra_flags += ['--openssl-no-asm', '--dest-cpu=arm64']
 
         _mxrun(['python3', join(_suite.dir, 'configure'),
                 '--partly-static',
